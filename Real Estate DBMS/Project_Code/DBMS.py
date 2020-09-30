@@ -13,7 +13,6 @@ def login():
 		con = pymysql.connect(host='localhost',
 	                              user=username,
 	                              password=password,
-	                              db='ESTATE',
 	                              cursorclass=pymysql.cursors.DictCursor)
 	except:
 		print()
