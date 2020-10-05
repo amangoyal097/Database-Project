@@ -10,12 +10,12 @@ def login():
 	tmp = sp.call('clear', shell=True)
 	print("LOG IN TO THE SQL SERVER");
 	global con
-	# username = input("Username: ")
-	# password = input("Password: ")
+	username = input("Username: ")
+	password = input("Password: ")
 	try:
 		con = pymysql.connect(host='localhost',
-	                              user='root',
-	                              password='blahblah',
+	                              user=username,
+	                              password=password,
 	                              db='Test7',
 	                              cursorclass=pymysql.cursors.DictCursor)
 		global cur
@@ -23,7 +23,7 @@ def login():
 	except:
 		print()
 		print("Failed,Please TRY AGAIN!")
-		time.sleep(2)
+		input("Press Enter to continue")
 		login()
 
 #----------------------------------------------------ESTATE OUTPUT------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ def bankc_choice(choice):
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 def insert_dependent(AgentID):
 	print()
@@ -223,7 +223,7 @@ def agentc_choice(choice):
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 
 def bank_change():
@@ -270,7 +270,7 @@ def admin_choice(choice):
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 
 def choice_administrator():
@@ -304,7 +304,7 @@ def administrator():
 		choice_administrator()
 	else:
 		print("Nope try again! Hint check README")
-		time.sleep(2)
+		input("Press Enter to continue")
 		administrator()
 #---------------------------------------------------------Queries------------------------------------------------------------------------------
 
@@ -331,7 +331,7 @@ def q1():
 		query = "SELECT * FROM COMMERCIAL";
 	else:
 		print("Unknown subclass\nTry Again!")
-		time.sleep(2)
+		input("Press Enter to continue")
 		q1()
 		return
 	print_query(query)
@@ -339,9 +339,28 @@ def q1():
 
 def q2():
 	main_output()
-	pincode = input("Enter PINCODE: ")
-	query = "SELECT * FROM STREETTOPINCODE NATURAL JOIN PROPERTY WHERE Pincode = '%s'" % (pincode)
-	print_query(query)
+	print()
+	print("Select a valid option: ")
+	print("1. Search by PINCODE")
+	print("2. Select by City")
+	print("3. Select by State")
+	choice = int(input("Enter choice: "))
+	if(choice < 1 or choice > 3):
+		print("Print choice out of range")
+		return
+	if(choice == 1):
+		pincode = input("Enter PINCODE: ")
+		query = "SELECT * FROM STREETTOPINCODE NATURAL JOIN PROPERTY WHERE Pincode = '%s'" % (pincode)
+		print_query(query)
+	if(choice == 2):
+		city = input("Enter City: ")
+		query = "SELECT * FROM PINCODETOCITY NATURAL JOIN STREETTOPINCODE NATURAL JOIN PROPERTY WHERE City = '%s'" % (city)
+		print_query(query)
+	if(choice == 3):
+		state = input("Enter State: ")
+		query = "SELECT * FROM CITYTOSTATE NATURAL JOIN PINCODETOCITY NATURAL JOIN STREETTOPINCODE NATURAL JOIN PROPERTY WHERE State = '%s'" % (state)
+		print_query(query)
+
 	input("Press Enter to continue")
 
 def q3():
@@ -415,7 +434,7 @@ def query_choice(choice):
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 
 def queries():
@@ -423,7 +442,7 @@ def queries():
 	print("MENTION THE NUMBER CORRESPONDING TO YOUR CHOICE")
 	print()
 	print("1.  List properties according to Property Subclass");
-	print("2.  Retrieve properties using Pincode");
+	print("2.  Retrieve properties using Pincode,City or State");
 	print("3.  Retrieve properties less than some cost");
 	print("4.  Get minimum cost per sq feet in a given city for a plot");
 	print("5.  Get Interest rate for the bank");
@@ -472,7 +491,39 @@ def delete_property():
 	query = "DELETE FROM PROPERTY WHERE PropertyID = '%d'" % (propertyid)
 	cur.execute(query)
 	print("Successfully Deleted the Property from the Database")
-	input("Press Enter to continue")	
+	input("Press Enter to continue")
+
+def delete_seller():
+	main_output()
+	sellerid = int(input("Enter your SellerID: "))
+	query = "DELETE FROM SELLER WHERE SellerID = '%d'" % (sellerid)
+	if(cur.execute(query) == 0):
+		print("No such Seller is listed")
+	else:
+		print("Successfull")
+	input("Press Enter to continue")
+
+def update_mobile():
+	main_output()
+	sellerid = int(input("Enter your SellerID: "))
+	mobileno = int(input("Enter new mobile number: "))
+	query = "UPDATE SELLER SET MobileNo = '%s' WHERE SellerID = '%d'" % (mobileno,sellerid)
+	if(cur.execute(query) == 0):
+		print("No such seller is listed")
+	else:
+		print("Successfull")
+	input("Press Enter to continue")
+
+def list_seller():
+	main_output()
+	sellerid = int(input("Enter your SellerID: "))
+	query = "SELECT * FROM SELLER WHERE SellerID = '%d'" % (sellerid)
+	if(cur.execute(query) == 0):
+		print("No such seller is listed")
+	else:
+		print_query(query)
+		print("Successfull")
+	input("Press Enter to continue")
 
 def seller_choice(choice):
 	if choice == 1:
@@ -482,10 +533,16 @@ def seller_choice(choice):
 		delete_property()
 		return 1
 	elif choice == 3:
+		delete_seller()
+	elif choice == 4:
+		update_mobile()
+	elif choice == 5:
+		list_seller()
+	elif choice == 6:
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 
 def seller():
@@ -494,20 +551,95 @@ def seller():
 	print();
 	print("1. Get details about the Proeperties You own");
 	print("2. Remove a property from the database");
-	print("3. Previous Menu")
+	print("3. Remove urself from the database");
+	print("4. Update your Mobile number")
+	print("5. See yout information")
+	print("6. Previous Menu")
 	print();
 	try:
 		choice = int(input("Enter choice: "))
 		if(seller_choice(choice) == 2):
 			return
 		else:
+			con.commit()
 			seller()
 	except Exception as e:
+		con.rollback()
 		print("Could Not Be Completed :'(")
 		print(">>>>>",e)
 		input("Press Enter to continue")
 		seller()
 
+#---------------------------------------------------------BUYER------------------------------------------------------------------------------
+
+def delete_buyer():
+	main_output()
+	buyerid = int(input("Enter your BuyerID: "))
+	query = "DELETE FROM BUYER WHERE BuyerID = '%d'" % (buyerid)
+	if(cur.execute(query) == 0):
+		print("No such Buyer is listed")
+	else:
+		print("Successfull")
+	input("Press Enter to continue")
+
+def update_mobile_buyer():
+	main_output()
+	buyerid = int(input("Enter your BuyerID: "))
+	mobileno = int(input("Enter new mobile number: "))
+	query = "UPDATE BUYER SET MobileNo = '%s' WHERE BuyerID = '%d'" % (mobileno,buyerid)
+	if(cur.execute(query) == 0):
+		print("No such buyer is listed")
+	else:
+		print("Successfull")
+	input("Press Enter to continue")
+
+def list_buyer():
+	main_output()
+	buyerid = int(input("Enter your BuyerID: "))
+	query = "SELECT * FROM BUYER WHERE BuyerID = '%d'" % (buyerid)
+	if(cur.execute(query) == 0):
+		print("No such buyer is listed")
+	else:
+		print_query(query)
+		print("Successfull")
+	input("Press Enter to continue")
+
+def buyer_choice(choice):
+	if choice == 1:
+		delete_buyer()
+	elif choice == 2:
+		update_mobile_buyer()
+	elif choice == 3:
+		list_buyer()
+	elif choice == 4:
+		return 2
+	else:
+		print("Choice out of range")
+		input("Press Enter to continue")
+		return 0
+
+def buyer():
+	main_output()
+	print("MENTION THE NUMBER CORRESPONDING TO YOUR CHOICE");	
+	print();
+	print("1. Remove urself from the database");
+	print("2. Update your Mobile number")
+	print("3. See yout information")
+	print("4. Previous Menu")
+	print();
+	try:
+		choice = int(input("Enter choice: "))
+		if(buyer_choice(choice) == 2):
+			return
+		else:
+			con.commit()
+			buyer()
+	except Exception as e:
+		con.rollback()
+		print("Could Not Be Completed :'(")
+		print(">>>>>",e)
+		input("Press Enter to continue")
+		buyer()
 
 #---------------------------------------------------------REGISTER------------------------------------------------------------------------------
 
@@ -683,7 +815,7 @@ def register_choice(choice):
 		return 2
 	else:
 		print("Choice out of range")
-		time.sleep(2)
+		input("Press Enter to continue")
 		return 0
 
 def register():
@@ -720,14 +852,16 @@ def main_choice(choice):
 	elif(choice == 3):
 		seller()
 	elif (choice == 4):
+		buyer()
+	elif (choice == 5):
 		register()
-	elif(choice == 5):
+	elif(choice == 6):
 		print("BYE!!")
 		global running
 		running = False
 	else:
 		print("Please choose from the above mentioned choices")
-		time.sleep(2)
+		input("Press Enter to continue")
 
 
 #-----------------------------------------------------MAIN PROMPT-------------------------------------------------------------------------------
@@ -738,15 +872,16 @@ def main_prompt():
 	print("1. Login as Administrator");
 	print("2. Funtionalities of the database");
 	print("3. Login as Seller");
-	print("4. New User Signup for Seller/Buyer");
-	print("5. Quit");
+	print("4. Login as Buyer")
+	print("5. New User Signup for Seller/Buyer");
+	print("6. Quit");
 	print();
 	try:
 		choice = int(input("Enter choice: "));
 		main_choice(choice);
 	except:
 		print("\nINVALID CHOICE!!\nTRY AGAIN");
-		time.sleep(2);
+		input("Press Enter to continue");
 
 
 #-----------------------------------------------------MAIN-------------------------------------------------------------------------------
