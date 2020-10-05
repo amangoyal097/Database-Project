@@ -2,18 +2,28 @@ import subprocess as sp
 import pymysql
 import pymysql.cursors
 import time
+from tabulate import tabulate
+#	ON DELETE CASCADE 
+# 	TRY EXCEPT
+#	CHANGE TABULATE STYLE
+#	INSERT DATA
+# 	QUERIES
+#	SELLER
+
 #-----------------------------------------------------LOGIN-------------------------------------------------------------------------------
 def login():
 	tmp = sp.call('clear', shell=True)
 	print("LOG IN TO THE SQL SERVER");
 	global con
-	username = input("Username: ")
-	password = input("Password: ")
+	# username = input("Username: ")
+	# password = input("Password: ")
 	try:
 		con = pymysql.connect(host='localhost',
-	                              user=username,
-	                              password=password,
+	                              user='root',
+	                              password='blahblah',
 	                              cursorclass=pymysql.cursors.DictCursor)
+		global cur
+		cur = con.cursor()
 	except:
 		print()
 		print("Failed,Please TRY AGAIN!")
@@ -38,11 +48,49 @@ def main_output():
 def property_deal():
 	main_output()
 	print("Enter the requried information")
-	buyerid =    input("Enter ID of Buyer:       ")
-	sellerid =   input("Enter ID of Seller:      ")
-	propertyid = input("Enter ID of Property:    ")
-	agentid =    input("Enter ID of Agent:       ")
-
+	buyerid =    int(input("Enter ID of Buyer:       "))
+	sellerid =   int(input("Enter ID of Seller:      "))
+	propertyid = int(input("Enter ID of Property:    "))
+	agentid =    int(input("Enter ID of Agent:       "))
+	query = " SELECT * FROM BUYER WHERE BuyerID = '%d'" % (buyerid)
+	cur.execute(query)
+	if(len(cur.fetchall()) == 0):
+		print("Invalid BuyerID")
+		input("Press any key to continue")
+		return
+	query = " SELECT * FROM SELLER WHERE SellerID = '%d'" % (sellerid)
+	cur.execute(query)
+	if(len(cur.fetchall()) == 0):
+		print("Invalid SellerID")
+		input("Press any key to continue")
+		return
+	query = " SELECT * FROM AGENT WHERE AgentID = '%d'" % (agentid)
+	cur.execute(query)
+	if(len(cur.fetchall()) == 0):
+		print("Invalid AgentID")
+		input("Press any key to continue")
+		return
+	query = "SELECT * FROM Property WHERE PropertyID = '%d'" % (propertyid)
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	if(len(tempdict) == 0):
+		print("Invalid PropertyID")
+		input("Press any key to continue")
+		return
+	if(tempdict[0]["SellerID"] != sellerid):
+		print("Property does not belong to this seller")
+		input("Press any key to continue")
+		return
+	query = "INSERT INTO PROPERTYDEAL(BuyerID,SellerID,PropertyID,AgentID) VALUES('%d','%d','%d','%d')" % (buyerid,sellerid,propertyid,agentid)
+	cur.execute(query)
+	query = "DELETE FROM PROPERTY WHERE PropertyID = '%d'" % (propertyid)
+	cur.execute(query)
+	print("Property Successfully deleted from database")
+	Bonus = float(tempdict[0]['Cost'] * 0.20)
+	query = "UPDATE AGENT SET Bonus = Bonus + '%f' WHERE AgentID = '%d'" % (Bonus,agentid)
+	cur.execute(query)
+	print("Bonus successfully given to the Agent")
+	input("Press any key to continue")
 #-----------------------------------------------------ADMINISTRATOR------------------------------------------------------------------------------
 
 
@@ -50,18 +98,36 @@ def insert_bank():
 	main_output()
 	bank = {}
 	print("Enter the following Bank details")
-	bank["name"] = input("Enter Name: ")
-	bank["address"] = input("Enter Branch address: ")
-	bank["interest"] = input("Enter interest rate offered by Bank: ")
+	bank["Name"] = input("Enter Name: ")
+	bank["BranchAddress"] = input("Enter Branch address: ")
+	bank["InterestRate"] = float(input("Enter interest rate offered by Bank: "))
+	query = "SELECT * FROM BANKINTEREST WHERE Name = '%s'" % (bank["Name"])
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	if(len(tempdict) == 0):
+		query = "INSERT INTO BANKINTEREST(Name,InterestRate) VALUES('%s','%f')" % (bank["Name"],bank["InterestRate"])
+		cur.execute(query)
+	query = "INSERT INTO BANK(Name,BranchAddress) VALUES('%s','%s')" % (bank["Name"],bank["BranchAddress"])
+	cur.execute(query)
+	query = "SELECT * FROM BANK WHERE BranchAddress = '%s'" % bank["BranchAddress"]
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	BankID = tempdict[0]["BankID"];
+	print("Data successfully inserted with BankID: " + str(BankID))
+	input("Press any key to continue")
 
 def delete_bank():
 	main_output()
-	bankid = input("Enter the BankID u want to delete: ")
+	bankid = int(input("Enter the BankID u want to delete: "))
+	query = "DELETE FROM BANK WHERE BANKID = '%d'" % (bankid)
+	cur.execute(query)
 
 def update_bank():
 	main_output()
-	bankid = input("Enter the Bank name to update the interest rate: ")
-	interest = input("Enter new interest rate: ")
+	name = input("Enter the Bank name to update the interest rate: ")
+	interest = float(input("Enter new interest rate: "))
+	query = "UPDATE BANK SET InterestRate = '%f' WHERE Name = '%s'" % (interest, name)
+	cur.execute(query)
 
 def bankc_choice(choice):
 	if(choice == 1):
@@ -79,26 +145,50 @@ def bankc_choice(choice):
 		print("Choice out of range")
 		time.sleep(2)
 		return 0
+def insert_dependent(AgentID):
+	print()
+	print("Enter information about the Dependent of the Agent")
+	depen = {}
+	depen["Name"] = input("Enter Name: ")
+	depen["Age"] = int(input("Enter Age: "))
+	depen["Gender"] = input("Enter Gender(Male,Female): ")
+	depen["Relationship"] = input("Enter Relationship: ")
+	query = "INSERT INTO DEPENDENT(AgentID, Name, Gender,Age,Relationship) VALUES('%d','%s','%s','%d','%s')" % (AgentID,depen["Name"],depen["Gender"],depen["Age"],depen["Relationship"])
+	cur.execute(query)
 
 def insert_agent():
 	main_output()
 	agent = {}
 	print("Enter details of the Agent")
-	agent["name"] = input("Ente name: ")
-	agent["mno"] = input("Enter Mobile Number: ")
-	agent["salary"] = input("Enter salary: ")
-	agent["bonus"] = 0;
-	agent["supid"] = input("Enter id of Supervisor (0 for no supervisor)")
+	agent["Name"] = input("Ente name: ")
+	agent["MobileNo"] = input("Enter Mobile Number: ")
+	agent["salary"] = int(input("Enter salary: "))
+	agent["supid"] = input("Enter id of Supervisor (Leave empty for no supervisor): ")
+	if(agent["SuperID"] != ''):
+		query = "INSERT INTO AGENT(Name,MobileNo,Salary,SuperID) VALUES('%s','%s','%d','%d')" % (agent["Name"], agent["MobileNo"], agent["Salary"], int(agent["SuperID"]))
+	else:
+		query = "INSERT INTO AGENT(Name,MobileNo,Salary) VALUES('%s','%s','%d','%d')" % (agent["Name"], agent["MobileNo"], agent["Salary"])
+	cur.execute(query)
+	query = "SELECT * FROM AGENT WHERE MobileNo = '%s'" % agent["MobileNo"]
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	AgentID = tempdict[0]["AgentID"]
+	insert_dependent(AgentID)
+	print("Data successfully inserted with AgentID: " + str(AgentID))
+	input("Press any key to continue")
 
 
 def delete_agent():
 	main_output()
-	agentid = input("Enter the AgentID u want to delete: ")
+	agentid = int(input("Enter the AgentID u want to delete: "))
+	query = "DELETE FROM AGENT WHERE AgentID = '%d'" % (agentid)
+	cur.execute(query)
 
 def update_agent():
 	main_output()
-	agentid = input("Enter the AgentID u want to update the salary to: ")
-	salary = input("Enter the new salary of the salary: ")
+	agentid = int(input("Enter the AgentID u want to update the salary to: "))
+	salary = int(input("Enter the new salary of the salary: "))
+	query = "UPDATE AGENT SET Salary '%d' WHERE AgentID = '%d'" % (salary,agentid)
 
 def agentc_choice(choice):
 	if(choice == 1):
@@ -126,16 +216,11 @@ def bank_change():
 	print("3. Update Bank Entries");
 	print("4. Previous Menu")
 	print();
-	try:
-		choice = int(input("Enter choice: "))
-		if(bankc_choice(choice) == 2):
-			return
-		else:
-			bank_change()
-	except:
-		print("\nINVALID CHOICE!!\nTRY AGAIN")
-		time.sleep(2)
-		choice_administrator()
+	choice = int(input("Enter choice: "))
+	if(bankc_choice(choice) == 2):
+		return
+	else:
+		bank_change()
 
 def agent_change():
 	main_output()
@@ -146,16 +231,11 @@ def agent_change():
 	print("3. Update Agent Entries");
 	print("4. Previous Menu")
 	print();
-	try:
-		choice = int(input("Enter choice: "))
-		if(agentc_choice(choice) == 2):
-			return
-		else:
-			agent_change()
-	except:
-		print("\nINVALID CHOICE!!\nTRY AGAIN")
-		time.sleep(2)
-		choice_administrator()
+	choice = int(input("Enter choice: "))
+	if(agentc_choice(choice) == 2):
+		return
+	else:
+		agent_change()
 
 def admin_choice(choice):
 	if(choice == 1):
@@ -189,9 +269,10 @@ def choice_administrator():
 			return
 		else:
 			choice_administrator()
-	except:
-		print("\nINVALID CHOICE!!\nTRY AGAIN")
-		time.sleep(2)
+	except Exception as e:
+		print("Coud not be completed :(")
+		print(">>>>>>>",e)
+		input("Press any key to continue")
 		choice_administrator()
 
 
@@ -205,28 +286,90 @@ def administrator():
 		time.sleep(2)
 		administrator()
 #---------------------------------------------------------Queries------------------------------------------------------------------------------
+
+def print_query(query):
+	cur.execute(query)
+	list = cur.fetchall()
+	if(len(list) == 0):
+		print("Empty Set")
+		return
+	print(tabulate(list,headers = "keys"))
+	input("\nPress any key to continue")
+
+
+def q1():
+	main_output()
+	subclass = input("Enter the subclass of proprerty: ");
+	query = "";
+	if subclass == "Residential":
+		query = "SELECT * FROM RESIDENTIAL";
+	elif subclass == "Plot":
+		query = "SELECT * FROM PLOT";
+	elif subclass == "Commercial":
+		query = "SELECT * FROM COMMERCIAL";
+	else:
+		print("Unknown subclass\nTry Again!")
+		time.sleep(2)
+		q1()
+		return
+
+def q2():
+	main_output()
+	pincode = input("Enter PINCODE: ")
+	query = "SELECT * FROM STREETTOPINCODE WHERE PINCODE = (%s) NATURAL JOIN PROPERTY" % (pincode)
+	print_query(query)
+
+def q3():
+	main_output()
+	cost = int(input("Enter Cost: "))
+	query = "SELECT * FROM PROPERTY WHERE COST < (%d)" % (cost);
+	print_query(query)
+
+def q4():
+	main_output()
+	city = input("Enter City: ")
+	query = "SELECT MIN(CostperSqFeet) FROM PLOT NATURAL JOIN PROPERTY NATURAL JOIN STREETTOPINCODE NATURAL JOIN PINCODETOCITY WHERE CITY = (%s)" % (city)
+	print_query(query)
+
+def q5():
+	main_output()
+	bname = input("Enter Bank Name: ")
+	query = "SELECT INTERESTRATE FROM BANKINTEREST WHERE NAME = (%s)" % (bname)
+	print_query(query)
+
+def q6():
+	main_output()
+	query = "SELECT AVG(CreditScore) FROM BUYER WHERE BankID IS NOT NULL";
+	print_query(query)
+
+def q7():
+	main_output()
+	agent_id = input("Enter Agent ID of the agent: ");
+	# TO BE COMPLETED
+	
 def query_choice(choice):
 	if(choice == 1):
+		q1()
 		return 1
 	if(choice == 2):
+		q2()
 		return 1
 	if(choice == 3):
+		q3()
 		return 1
 	if(choice == 4):
+		q4()
 		return 1
 	if(choice == 5):
+		q5()
 		return 1
 	if(choice == 6):
+		q6()
 		return 1
 	if(choice == 7):
+		q7()
 		return 1
 	if(choice == 8):
-		return 1
-	if(choice == 9):
-		return 1
-	if(choice == 10):
-		return 1
-	elif(choice == 11):
 		return 2
 	else:
 		print("Choice out of range")
@@ -239,15 +382,12 @@ def queries():
 	print()
 	print("1.  List properties according to Property Subclass");
 	print("2.  Retrieve properties using Pincode,City or State");
-	print("3.  Retrieve properties greater or less than some cost");
-	print("4.  Retrieve properties using Pincode,City or State");
-	print("5.  Get minimum cost per sq feet in a given city for a plot");
-	print("6.  Get Interest rate for the bank");
-	print("7.  Average Credit Score of the buyers the bank gives Loan too");
-	print("8.  Type of Properties an Agent has dealt the most");
-	print("9.  Subclass of Properties an Agent has dealt with the most");
-	print("10. Get the minimum credit score needed to avail loan at the bank")
-	print("11. Previous Menu");
+	print("3.  Retrieve properties less than some cost");
+	print("4.  Get minimum cost per sq feet in a given city for a plot");
+	print("5.  Get Interest rate for the bank");
+	print("6.  Average Credit Score of the buyers the bank gives Loan too");
+	print("7.  Type of Properties an Agent has dealt the most");
+	print("8.  Previous Menu");
 	print();
 	try:
 		choice = int(input("Enter choice: "))
@@ -308,95 +448,164 @@ def seller():
 
 #---------------------------------------------------------REGISTER------------------------------------------------------------------------------
 
-def register_residential():
+def register_residential(PropertyID):
 	print()
 	res = {}
-	res["electime"] = input("Enter Electricity Time: ")
-	res["watertime"] = input("Enter Water Time: ")
-	res["type"] = input("Enter Type (Villa, Flat, Penthouse): ")
-	res["life"] = input("Enter Lift Availability (Yes, No): ")
-	res["area"] = input("Enter Carpet Area(In SqFeet): ")
-	res["rooms"] = input("Entter number of bedrooms: ")
-	res["parking"] = input("Enter number of reserved parking spots: ")
+	res["ElectricityTime"] = int(input("Enter Electricity Time(in Hours): "))
+	res["WaterTime"] = int(input("Enter Water Time(in Hours): "))
+	res["Type"] = input("Enter Type (Villa, Flat, Penthouse): ")
+	res["LiftAvailibility"] = input("Enter Lift Availability (Yes, No): ")
+	res["CarpetAreaInSqFt"] = int(input("Enter Carpet Area(In SqFeet): "))
+	res["BedRooms"] = int(input("Enter number of bedrooms: "))
+	res["ReservedParking"] = int(input("Enter number of reserved parking spots: "))
+	query = "INSERT INTO RESIDENTIAL(PropertyID,ElectricityTime,WaterTime,Type,LiftAvailibility,CarpetAreaInSqFt,BedRooms,ReservedParking) VALUES('%d','%d','%d',%s','%s','%d','%d','%d')" % (PropertyID,res["ElectricityTime"],res["WaterTime"],res["Type"],res["LiftAvailibility"],res["CarpetAreaInSqFt"],res["BedRooms"],res["ReservedParking"])
+	cur.execute(query)
 
-def services():
+def services(PropertyID):
 	print()
 	cnt = int(input("Enter number of services offered: "))
-	service = []
 	for i in range(cnt):
-		service.append(input("Enter service description: "))
+		desc = input("Enter service description: ")
+		query = "INSERT INTO SERVICES(PropertyID,ServiceDesc) VALUES('%d','%s')" % (PropertyID,desc)
+		cur.execute(query)
 
 
-def register_commercial():
+def register_commercial(PropertyID):
 	print()
 	comm = {}
-	comm["floors"] = input("Enter number of floors: ")
-	comm["type"] = input("Enter Type (Office, Godown, Shop): ")
-	comm["parking"] = input("Enter number of reserved parking spots: ")
-	comm["year"] = input("Enter Year in which the proeperty was built: ")
-	services()
+	comm["Floors"] = int(input("Enter number of floors: "))
+	comm["Type"] = input("Enter Type (Office, Godown, Shop): ")
+	comm["ReservedParking"] = int(input("Enter number of reserved parking spots: "))
+	comm["YearBuilt"] = int(input("Enter Year in which the proeperty was built: "))
+	query = "INSERT INTO COMMERCIAL(PropertyID,Floors,Type,ReservedParking,YearBuilt) VALUES ('%d','%d','%s','%d','%d')" % (PropertyID,comm["Floors"],comm["Type"],comm["ReservedParking"],comm["YearBuilt"])
+	cur.execute(query)
+	services(PropertyID)
 
-def register_plot():
+def register_plot(PropertyID,Cost):
 	print()
 	plot = {}
-	plot["area"] = input("Enter area in Acres: ")
-	plot["bwall"] = input("Presence of Boundary Wall (Yes,No): ")
-	plot["floors"] = input("Enter maximum number of floors that can be built: ")
-	# plot["areainsqfeet"] = some formula
+	plot["AreainAcres"] = int(input("Enter area in Acres: "))
+	plot["BoundaryWall"] = input("Presence of Boundary Wall (Yes,No): ")
+	plot["FloorsAllowed"] = int(input("Enter maximum number of floors that can be built: "))
+	AreaInSqFeet = float(plot["AreaInAcres"] / 43560 )
+	query = "SELECT * FROM AREACONVERSION WHERE AreainAcres = '%d'" % (plot["AreaInAcres"])
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	if(len(tempdict) == 0):
+		query = "INSERT INTO AREACONVERSION(AreaInAcres,AreaInSqFeet) VALUES('%d','%f')" % (plot["AreaInAcres"],AreaInSqFeet)
+		cur.execute(query)
+	plot["CostperSqFeet"] = AreaInSqFeet / Cost
+	query = "INSERT INTO PLOT(PropertyID,AreaInAcres,BoundaryWall,Floors,CostperSqFeet) VALUES('%d','%d','%s','%d','%f')" % (PropertyID,plot["AreaInAcres"],plot["BoundaryWall"],plot["FloorsAllowed"],CostperSqFeet)
+	cur.execute(query)
 
-def register_person():
+def register_person(PropertyID):
 	person = {}
 	print()
 	print("Enter details of someone who has used this property before")
-	person["name"] = input("Enter name: ")
-	person["gender"] = input("Enter gender: ")
-	person["occupation"] = input("Enter occupation: ")
-	person["remarks"] = input("Enter remarks about the property: ")
+	person["Name"] = input("Enter name: ")
+	person["gender"] = input("Enter gender(Male,Female): ")
+	person["Occupation"] = input("Enter occupation: ")
+	person["Remarks"] = input("Enter remarks about the property: ")
+	query = "INSERT INTO PERSON(PropertyID,Name,Gender,Occupation,Remarks) VALUES('%d','%s','%s','%s','%s')" % (PropertyID,person["Name"],person["Gender"],person["Occupation"],person["Remarks"])
+	cur.execute(query)
 
-
-def register_property():
+def register_property(SellerID):
 	print()
 	print("Enter the Details for the Property")
 	prop = {}
-	prop["pno"] = input("Enter Propety number: ")
-	prop["sadd"] = input("Enter Street Address: ")
-	prop["pincode"] = input("Enter PINCODE: ")
-	prop["city"] = input("Enter City: ")
-	prop["state"] = input("Enter State: ")
-	prop["availdate"] = input("Enter the DATE from which the Propety will be available: ")
-	prop["facedir"] = input("Enter the direction the main gate of the propety is facing: ")
-	prop["cost"] = int(input("Enter the expected cost for the propety: "))
+	prop["PropertyNo"] = input("Enter Propety number: ")
+	prop["StreetAddress"] = input("Enter Street Address: ")
+	prop["Pincode"] = input("Enter PINCODE: ")
+	prop["City"] = input("Enter City: ")
+	prop["State"] = input("Enter State: ")
+	prop["AvailableFrom"] = input("Enter the DATE from which the Propety will be available(YYYY-MM-DD): ")
+	prop["FacingDirection"] = input("Enter the direction the main gate of the propety is facing(North,South,East,West): ")
+	prop["Cost"] = int(input("Enter the expected cost for the propety: "))
 	subclass = input("Enter Type of Propety (Residential, Commercial, Plot): ")
+	query = "INSERT INTO STREETTOPINCODE(StreetAddress,Pincode) VALUES ('%s','%s')" % (prop["StreetAddress"],prop["Pincode"])
+	cur.execute(query)
+	query = "SELECT * FROM PINCODETOCITY WHERE Pincode = '%s'" % (prop["Pincode"])
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	if(len(tempdict) == 0):
+		query = "INSERT INTO PINCODETOCITY(Pincode,City) VALUES ('%s','%s')" % (prop["Pincode"],prop["City"])
+		cur.execute(query)
+	query = "SELECT * FROM CITYTOSTATE WHERE City = '%s'" % (prop["City"])
+	cur.execute(query)
+	tempdict = cur.fetchall()
+	if(len(tempdict) == 0):
+		query = "INSERT INTO CITYTOSTATE(City,State) VALUES('%s','%s')" % (prop["City"],prop["State"])
+		cur.execute(query)
+	query = "INSERT INTO PROPERTY(PropertyNo,StreetAddress,AvailableFrom,Cost,FacingDirection,SellerID) VALUES('%s','%s','%s','%d','%s','%d')" % (prop["PropertyNo"],prop["StreetAddress"],prop["AvailableFrom"],prop["Cost"],prop["FacingDirection"],SellerID)
+	cur.execute(query)
+	query = "SELECT * FROM PROPERTY WHERE StreetAddress = '%s'" % (prop["StreetAddress"])
+	cur.execute(query);
+	tempdict = cur.fetchall()
+	PropertyID = tempdict[0]['PropertyID']
+	print("Data is successfully inserted with PropertyID: " + str(PropertyID));
 	if subclass == "Residential":
-		register_residential()
+		register_residential(PropertyID)
 	elif subclass == "Commercial":
-		register_commercial()
+		register_commercial(PropertyID)
 	elif subclass == "Plot":
-		register_plot()
+		register_plot(PropertyID,prop["Cost"])
 	else:
-		print("Invalid entry")
-	register_person()
+		print("Invalid entry in Property Class")
+	register_person(PropertyID)
 
 
 def register_seller():
 	main_output()
 	sell = {}
-	print("Enter the following details")
-	sell["name"]  = input("Enter name: ")
-	sell["email"] = input("Enter email: ")
-	sell["mno"]   = input("Enter MobileNo:  ")
-	sell["address"] = input("Enter Address: ")
-	register_property()
+	try:
+		print("Enter the following details")
+		sell["Name"]  = input("Enter name: ")
+		sell["Email"] = input("Enter email: ")
+		sell["MobileNo"]   = input("Enter MobileNo:  ")
+		sell["Address"] = input("Enter Address: ")
+		query = "INSERT INTO SELLER(Name,Email,MobileNo,Address) VALUES ('%s', '%s', '%s','%s')" % (sell["Name"], sell["Email"], sell["MobileNo"],sell["Address"])
+		cur.execute(query)
+		query = "SELECT * FROM SELLER WHERE Email = '%s'" % (sell["Email"])
+		cur.execute(query);
+		tempdict = cur.fetchall()
+		register_property(tempdict[0]["SellerID"])
+		con.commit()
+		print("Data is successfully inserted with SellerID: " + str(tempdict[0]["SellerID"]));
+		input("Press any key to continue")
+	except Exception as e:
+		con.rollback()
+		print("Failed to insert into database")
+		print(">>>>>>>>",e)
+		input("Press any key to continue")
 
 def register_buyer():
 	main_output()
 	buy = {}
-	print("Enter the following details")
-	buy["name"]  = input("Enter name: ")
-	buy["email"] = input("Enter email: ")
-	buy["mno"]   = input("Enter MobileNo:  ")
-	buy["address"] = input("Enter Address: ")	
-	buy["creditscore"] = input("Enter Credit Score: ")
+	try:
+		print("Enter the following details")
+		buy["Name"]  = input("Enter name: ")
+		buy["Email"] = input("Enter email: ")
+		buy["MobileNo"] = input("Enter MobileNo:  ")
+		buy["Address"] = input("Enter Address: ")	
+		buy["CreditScore"] = int(input("Enter Credit Score(300 - 800): "))
+		buy["BankID"] = input("Enter BankID of the Bank if the  Buyer has taken a loan: ")
+		query = "";
+		if(buy["BankID"] == ''):
+			query = "INSERT INTO BUYER(Name,Email,MobileNo,Address,CreditScore) VALUES('%s', '%s', '%s', '%s','%d')" % (buy["Name"],buy["Email"],buy["MobileNo"],buy["Address"],buy["CreditScore"])
+		else:
+			query = "INSERT INTO BUYER(Name,Email,MobileNo,Address,CreditScore,BankID) VALUES('%s', '%s', '%s', '%s','%d','%d')" % (buy["Name"],buy["Email"],buy["MobileNo"],buy["Address"],buy["CreditScore"],int(buy["BankID"]))
+		cur.execute(query)
+		con.commit()
+		query = "SELECT * FROM BUYER WHERE Email = '%s'" % (buy["Email"])
+		cur.execute(query);
+		tempdict = cur.fetchall()
+		print("Data is successfully inserted with BuyerID: " + str(tempdict[0]["BuyerID"]));
+		input("Press any key to continue")
+	except Exception as e:
+		con.rollback()
+		print("Failed to insert into database")
+		print(">>>>>>>>",e)
+		input("Press any key to continue")
 
 def register_choice(choice):
 	if(choice == 1):
@@ -478,6 +687,17 @@ def main_prompt():
 
 if __name__ == "__main__":
 	login();
+	file = open('dump.sql');
+	try:
+		for line in file:
+			cur.execute(line);
+		datafile = open('data.sql');
+		for line in datafile:
+			cur.execute(line);
+		con.commit();
+	except Exception as e:
+		print("Failed to create or populate database")
+		print(">>>>>>>>",e)
 	global running
 	running = True;
 	while(running == True):
