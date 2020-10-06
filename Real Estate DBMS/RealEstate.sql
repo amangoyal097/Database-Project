@@ -18,7 +18,8 @@
 --
 -- Table structure for table `AGENT`
 --
-
+CREATE DATABASE RealEstate;
+USE RealEstate;
 DROP TABLE IF EXISTS `AGENT`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -32,8 +33,8 @@ CREATE TABLE `AGENT` (
   PRIMARY KEY (`AgentID`),
   UNIQUE KEY `UC_AGENT` (`MobileNo`),
   KEY `SuperID` (`SuperID`),
-  CONSTRAINT `AGENT_ibfk_1` FOREIGN KEY (`SuperID`) REFERENCES `AGENT` (`AgentID`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `AGENT_chk_1` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$'))
+  CONSTRAINT `AGENT_ForeignKey` FOREIGN KEY (`SuperID`) REFERENCES `AGENT` (`AgentID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `AGENT_MobileCheck` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$'))
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -108,7 +109,7 @@ CREATE TABLE `BANKINTEREST` (
   `Name` varchar(100) NOT NULL,
   `InterestRate` decimal(18,2) NOT NULL,
   PRIMARY KEY (`Name`),
-  CONSTRAINT `BANKINTEREST_chk_1` CHECK (((`InterestRate` <= 100.00) and (`InterestRate` >= 0.00)))
+  CONSTRAINT `BANKINTEREST_InterestRateCheck` CHECK (((`InterestRate` <= 100.00) and (`InterestRate` >= 0.00)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -142,10 +143,10 @@ CREATE TABLE `BUYER` (
   UNIQUE KEY `Email` (`Email`),
   UNIQUE KEY `Address` (`Address`),
   KEY `BankID` (`BankID`),
-  CONSTRAINT `BUYER_ibfk_1` FOREIGN KEY (`BankID`) REFERENCES `BANK` (`BankID`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `BUYER_chk_1` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$')),
-  CONSTRAINT `BUYER_chk_2` CHECK (regexp_like(`Email`,_utf8mb4'^(?=[A-Z0-9][A-Z0-9@.%+-]{5,253}+$)[A-Z0-9.%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+.)[A-Z0-9]++(?:-[A-Z0-9]++)*+.){1,8}+[A-Z]{2,63}+$')),
-  CONSTRAINT `BUYER_chk_3` CHECK (((`CreditScore` >= 300) and (`CreditScore` <= 800)))
+  CONSTRAINT `BUYER_ForeignKey` FOREIGN KEY (`BankID`) REFERENCES `BANK` (`BankID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `BUYER_MobileCheck` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$')),
+  CONSTRAINT `BUYER_EmailCheck` CHECK (regexp_like(`Email`,_utf8mb4'^(?=[A-Z0-9][A-Z0-9@.%+-]{5,253}+$)[A-Z0-9.%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+.)[A-Z0-9]++(?:-[A-Z0-9]++)*+.){1,8}+[A-Z]{2,63}+$')),
+  CONSTRAINT `BUYER_CreditScoreCheck` CHECK (((`CreditScore` >= 300) and (`CreditScore` <= 800)))
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -197,9 +198,9 @@ CREATE TABLE `COMMERCIAL` (
   `YearBuilt` int NOT NULL,
   `PropertyID` int NOT NULL,
   PRIMARY KEY (`PropertyID`),
-  CONSTRAINT `COMMERCIAL_ibfk_1` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `COMMERCIAL_chk_1` CHECK (((`YearBuilt` <= 2020) and (`YearBuilt` >= 1000))),
-  CONSTRAINT `COMMERCIAL_chk_2` CHECK ((`Type` in (_utf8mb4'shop',_utf8mb4'Shop',_utf8mb4'office',_utf8mb4'Office',_utf8mb4'godown',_utf8mb4'Godown')))
+  CONSTRAINT `COMMERCIAL_ForeignKey` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `COMMERCIAL_YearCheck` CHECK (((`YearBuilt` <= 2020) and (`YearBuilt` >= 1000))),
+  CONSTRAINT `COMMERCIAL_TypeCheck` CHECK ((`Type` in (_utf8mb4'shop',_utf8mb4'Shop',_utf8mb4'office',_utf8mb4'Office',_utf8mb4'godown',_utf8mb4'Godown')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -228,9 +229,9 @@ CREATE TABLE `DEPENDENT` (
   `Relationship` varchar(100) NOT NULL,
   PRIMARY KEY (`Name`,`AgentId`),
   KEY `AgentId` (`AgentId`),
-  CONSTRAINT `DEPENDENT_ibfk_1` FOREIGN KEY (`AgentId`) REFERENCES `AGENT` (`AgentID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `DEPENDENT_chk_1` CHECK ((`Gender` in (_utf8mb4'Female',_utf8mb4'Male',_utf8mb4'male',_utf8mb4'female'))),
-  CONSTRAINT `DEPENDENT_chk_2` CHECK ((`Age` > 0))
+  CONSTRAINT `DEPENDENT_ForeignKey` FOREIGN KEY (`AgentId`) REFERENCES `AGENT` (`AgentID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `DEPENDENT_GenderCheck` CHECK ((`Gender` in (_utf8mb4'Female',_utf8mb4'Male',_utf8mb4'male',_utf8mb4'female'))),
+  CONSTRAINT `DEPENDENT_AgeCheck` CHECK ((`Age` > 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -258,8 +259,8 @@ CREATE TABLE `PERSON` (
   `Occupation` varchar(100) NOT NULL,
   `Remarks` varchar(100) NOT NULL,
   PRIMARY KEY (`PropertyID`,`Name`),
-  CONSTRAINT `PERSON_ibfk_1` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PERSON_chk_1` CHECK ((`Gender` in (_utf8mb4'Female',_utf8mb4'Male',_utf8mb4'male',_utf8mb4'female')))
+  CONSTRAINT `PERSON_ForeignKey` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `PERSON_GenderCheck` CHECK ((`Gender` in (_utf8mb4'Female',_utf8mb4'Male',_utf8mb4'male',_utf8mb4'female')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -284,7 +285,7 @@ CREATE TABLE `PINCODETOCITY` (
   `Pincode` varchar(6) NOT NULL,
   `City` varchar(100) NOT NULL,
   PRIMARY KEY (`Pincode`),
-  CONSTRAINT `PINCODETOCITY_chk_1` CHECK (regexp_like(`Pincode`,_utf8mb4'^[0-9]{6}$'))
+  CONSTRAINT `PINCODETOCITY_PincodeCheck` CHECK (regexp_like(`Pincode`,_utf8mb4'^[0-9]{6}$'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -312,8 +313,8 @@ CREATE TABLE `PLOT` (
   `BoundaryWall` varchar(100) NOT NULL,
   `PropertyID` int NOT NULL,
   PRIMARY KEY (`PropertyID`),
-  CONSTRAINT `PLOT_ibfk_1` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PLOT_chk_1` CHECK ((`BoundaryWall` in (_utf8mb4'Yes',_utf8mb4'yes',_utf8mb4'No',_utf8mb4'no')))
+  CONSTRAINT `PLOT_ForeignKey` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `PLOT_BoundaryWallCheck` CHECK ((`BoundaryWall` in (_utf8mb4'Yes',_utf8mb4'yes',_utf8mb4'No',_utf8mb4'no')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -345,8 +346,8 @@ CREATE TABLE `PROPERTY` (
   PRIMARY KEY (`PropertyID`),
   UNIQUE KEY `StreetAddress` (`StreetAddress`),
   KEY `SellerId` (`SellerID`),
-  CONSTRAINT `PROPERTY_ibfk_1` FOREIGN KEY (`SellerID`) REFERENCES `SELLER` (`SellerID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PROPERTY_chk_1` CHECK ((`FacingDirection` in (_utf8mb4'North',_utf8mb4'South',_utf8mb4'West',_utf8mb4'East',_utf8mb4'north',_utf8mb4'south',_utf8mb4'west',_utf8mb4'east')))
+  CONSTRAINT `PROPERTY_ForeignKey` FOREIGN KEY (`SellerID`) REFERENCES `SELLER` (`SellerID`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `PROPERTY_Direction` CHECK ((`FacingDirection` in (_utf8mb4'North',_utf8mb4'South',_utf8mb4'West',_utf8mb4'East',_utf8mb4'north',_utf8mb4'south',_utf8mb4'west',_utf8mb4'east')))
 ) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -378,10 +379,10 @@ CREATE TABLE `PROPERTYDEAL` (
   KEY `SellerID` (`SellerID`),
   KEY `AgentID` (`AgentID`),
   KEY `PropertyID` (`PropertyID`),
-  CONSTRAINT `PROPERTYDEAL_ibfk_1` FOREIGN KEY (`BuyerID`) REFERENCES `BUYER` (`BuyerID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PROPERTYDEAL_ibfk_2` FOREIGN KEY (`SellerID`) REFERENCES `SELLER` (`SellerID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PROPERTYDEAL_ibfk_3` FOREIGN KEY (`AgentID`) REFERENCES `AGENT` (`AgentID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `PROPERTYDEAL_ibfk_4` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `PROPERTYDEAL_FkBuyerID` FOREIGN KEY (`BuyerID`) REFERENCES `BUYER` (`BuyerID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `PROPERTYDEAL_FkSellerID` FOREIGN KEY (`SellerID`) REFERENCES `SELLER` (`SellerID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `PROPERTYDEAL_FkAgentID` FOREIGN KEY (`AgentID`) REFERENCES `AGENT` (`AgentID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `PROPERTYDEAL_FkPropertyID` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -412,11 +413,11 @@ CREATE TABLE `RESIDENTIAL` (
   `ReservedParking` int NOT NULL,
   `PropertyID` int NOT NULL,
   PRIMARY KEY (`PropertyID`),
-  CONSTRAINT `RESIDENTIAL_ibfk_1` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `RESIDENTIAL_chk_1` CHECK ((`Type` in (_utf8mb4'Villa',_utf8mb4'villa',_utf8mb4'Flat',_utf8mb4'flat',_utf8mb4'Penthouse',_utf8mb4'penthouse'))),
-  CONSTRAINT `RESIDENTIAL_chk_2` CHECK (((`ElectricityTime` >= 0) and (`ElectricityTime` <= 24))),
-  CONSTRAINT `RESIDENTIAL_chk_3` CHECK (((`WaterTime` >= 0) and (`WaterTime` <= 24))),
-  CONSTRAINT `RESIDENTIAL_chk_4` CHECK ((`LiftAvailibility` in (_utf8mb4'Yes',_utf8mb4'yes',_utf8mb4'No',_utf8mb4'no')))
+  CONSTRAINT `RESIDENTIAL_ForeignKey` FOREIGN KEY (`PropertyID`) REFERENCES `PROPERTY` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `RESIDENTIAL_TypeCheck` CHECK ((`Type` in (_utf8mb4'Villa',_utf8mb4'villa',_utf8mb4'Flat',_utf8mb4'flat',_utf8mb4'Penthouse',_utf8mb4'penthouse'))),
+  CONSTRAINT `RESIDENTIAL_ElectricityTimeCheck` CHECK (((`ElectricityTime` >= 0) and (`ElectricityTime` <= 24))),
+  CONSTRAINT `RESIDENTIAL_WaterTimeCheck` CHECK (((`WaterTime` >= 0) and (`WaterTime` <= 24))),
+  CONSTRAINT `RESIDENTIAL_LiftCheck` CHECK ((`LiftAvailibility` in (_utf8mb4'Yes',_utf8mb4'yes',_utf8mb4'No',_utf8mb4'no')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -447,8 +448,8 @@ CREATE TABLE `SELLER` (
   UNIQUE KEY `MobileNo` (`MobileNo`),
   UNIQUE KEY `Email` (`Email`),
   UNIQUE KEY `Address` (`Address`),
-  CONSTRAINT `SELLER_chk_1` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$')),
-  CONSTRAINT `SELLER_chk_2` CHECK (regexp_like(`Email`,_utf8mb4'^(?=[A-Z0-9][A-Z0-9@.%+-]{5,253}+$)[A-Z0-9.%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+.)[A-Z0-9]++(?:-[A-Z0-9]++)*+.){1,8}+[A-Z]{2,63}+$'))
+  CONSTRAINT `SELLER_MobileCheck` CHECK (regexp_like(`MobileNo`,_utf8mb4'^[0-9]{10}$')),
+  CONSTRAINT `SELLER_EmailCheck` CHECK (regexp_like(`Email`,_utf8mb4'^(?=[A-Z0-9][A-Z0-9@.%+-]{5,253}+$)[A-Z0-9.%+-]{1,64}+@(?:(?=[A-Z0-9-]{1,63}+.)[A-Z0-9]++(?:-[A-Z0-9]++)*+.){1,8}+[A-Z]{2,63}+$'))
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -473,7 +474,7 @@ CREATE TABLE `SERVICES` (
   `PropertyID` int NOT NULL,
   `ServiceDesc` varchar(100) NOT NULL,
   PRIMARY KEY (`PropertyID`,`ServiceDesc`),
-  CONSTRAINT `SERVICES_ibfk_1` FOREIGN KEY (`PropertyID`) REFERENCES `COMMERCIAL` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `SERVICES_ForeignKey` FOREIGN KEY (`PropertyID`) REFERENCES `COMMERCIAL` (`PropertyID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -498,7 +499,7 @@ CREATE TABLE `STREETTOPINCODE` (
   `Pincode` varchar(6) NOT NULL,
   `StreetAddress` varchar(100) NOT NULL,
   PRIMARY KEY (`StreetAddress`),
-  CONSTRAINT `STREETTOPINCODE_chk_1` CHECK (regexp_like(`Pincode`,_utf8mb4'^[0-9]{6}$'))
+  CONSTRAINT `STREETTOPINCODE_PincodeCheck` CHECK (regexp_like(`Pincode`,_utf8mb4'^[0-9]{6}$'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

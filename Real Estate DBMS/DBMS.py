@@ -16,7 +16,7 @@ def login():
 		con = pymysql.connect(host='localhost',
 	                              user=username,
 	                              password=password,
-	                              db='Test7',
+	                              db='RealEstate',
 	                              cursorclass=pymysql.cursors.DictCursor)
 		global cur
 		cur = con.cursor()
@@ -81,7 +81,7 @@ def property_deal():
 	cur.execute(query)
 	query = "UPDATE PROPERTY SET SellerID = NULL WHERE PropertyID = '%d'" % (propertyid)
 	cur.execute(query)
-	Bonus = float(tempdict[0]['Cost'] * 0.20)
+	Bonus = float(tempdict[0]['Cost'] * 0.02)
 	query = "UPDATE AGENT SET Bonus = Bonus + '%f' WHERE AgentID = '%d'" % (Bonus,agentid)
 	cur.execute(query)
 	print()
@@ -164,6 +164,7 @@ def insert_dependent(AgentID):
 		depen["Relationship"] = input("Enter Relationship: ")
 		query = "INSERT INTO DEPENDENT(AgentID, Name, Gender,Age,Relationship) VALUES('%d','%s','%s','%d','%s')" % (AgentID,depen["Name"],depen["Gender"],depen["Age"],depen["Relationship"])
 		cur.execute(query)
+		con.commit()
 
 def insert_agent():
 	main_output()
@@ -178,12 +179,14 @@ def insert_agent():
 	else:
 		query = "INSERT INTO AGENT(Name,MobileNo,Salary) VALUES('%s','%s','%d')" % (agent["Name"], agent["MobileNo"], agent["Salary"])
 	cur.execute(query)
+	con.commit()
 	query = "SELECT * FROM AGENT WHERE MobileNo = '%s'" % agent["MobileNo"]
 	cur.execute(query)
 	tempdict = cur.fetchall()
 	AgentID = tempdict[0]["AgentID"]
-	insert_dependent(AgentID)
 	print("Data successfully inserted with AgentID: " + str(AgentID))
+	insert_dependent(AgentID)
+	print("Successfull")
 	input("Press Enter to continue")
 
 
@@ -239,6 +242,7 @@ def bank_change():
 	if(bankc_choice(choice) == 2):
 		return
 	else:
+		con.commit()
 		bank_change()
 
 def agent_change():
@@ -254,6 +258,7 @@ def agent_change():
 	if(agentc_choice(choice) == 2):
 		return
 	else:
+		con.commit()
 		agent_change()
 
 def admin_choice(choice):
@@ -652,9 +657,10 @@ def register_residential(PropertyID):
 	res["LiftAvailibility"] = input("Enter Lift Availability (Yes, No): ")
 	res["CarpetAreaInSqFt"] = int(input("Enter Carpet Area(In SqFeet): "))
 	res["BedRooms"] = int(input("Enter number of bedrooms: "))
-	res["ParkingSpace"] = int(input("Enter number of reserved parking spots: "))
-	query = "INSERT INTO RESIDENTIAL(PropertyID,ElectricityTime,WaterTime,Type,LiftAvailibility,CarpetAreaInSqFt,BedRooms,ParkingSpace) VALUES('%d','%d','%d','%s','%s','%d','%d','%d')" % (PropertyID,res["ElectricityTime"],res["WaterTime"],res["Type"],res["LiftAvailibility"],res["CarpetAreaInSqFt"],res["BedRooms"],res["ParkingSpace"])
+	res["ReservedParking"] = int(input("Enter number of reserved parking spots: "))
+	query = "INSERT INTO RESIDENTIAL(PropertyID,ElectricityTime,WaterTime,Type,LiftAvailibility,CarpetAreaInSqFt,BedRooms,ReservedParking) VALUES('%d','%d','%d','%s','%s','%d','%d','%d')" % (PropertyID,res["ElectricityTime"],res["WaterTime"],res["Type"],res["LiftAvailibility"],res["CarpetAreaInSqFt"],res["BedRooms"],res["ReservedParking"])
 	cur.execute(query)
+	con.commit()
 
 def services(PropertyID):
 	print()
@@ -663,6 +669,7 @@ def services(PropertyID):
 		desc = input("Enter service description: ")
 		query = "INSERT INTO SERVICES(PropertyID,ServiceDesc) VALUES('%d','%s')" % (PropertyID,desc)
 		cur.execute(query)
+		con.commit()
 
 
 def register_commercial(PropertyID):
@@ -674,6 +681,7 @@ def register_commercial(PropertyID):
 	comm["YearBuilt"] = int(input("Enter Year in which the proeperty was built: "))
 	query = "INSERT INTO COMMERCIAL(PropertyID,Floors,Type,ParkingSpace,YearBuilt) VALUES ('%d','%d','%s','%d','%d')" % (PropertyID,comm["Floors"],comm["Type"],comm["ParkingSpace"],comm["YearBuilt"])
 	cur.execute(query)
+	con.commit()
 	services(PropertyID)
 
 def register_plot(PropertyID,Cost):
@@ -687,11 +695,12 @@ def register_plot(PropertyID,Cost):
 	cur.execute(query)
 	tempdict = cur.fetchall()
 	if(len(tempdict) == 0):
-		query = "INSERT INTO AREACONVERSION(AreaInAcres,AreaInSqFt) VALUES('%d','%f')" % (plot["AreaInAcres"],AreaInSqFeet)
+		query = "INSERT INTO AREACONVERSION(AreaInAcres,AreaInSqFt) VALUES('%d','%f')" % (plot["AreaInAcres"],AreaInSqFt)
 		cur.execute(query)
 	plot["CostPerSqFt"] = AreaInSqFt / Cost
 	query = "INSERT INTO PLOT(PropertyID,AreaInAcres,BoundaryWall,FloorsAllowed,CostPerSqFt) VALUES('%d','%d','%s','%d','%f')" % (PropertyID,plot["AreaInAcres"],plot["BoundaryWall"],plot["FloorsAllowed"],plot["CostPerSqFt"])
 	cur.execute(query)
+	con.commit()
 
 def register_person(PropertyID):
 	cnt = int(input("Enter number of references for this property: "))
@@ -705,6 +714,7 @@ def register_person(PropertyID):
 		person["Remarks"] = input("Enter remarks about the property: ")
 		query = "INSERT INTO PERSON(PropertyID,Name,Gender,Occupation,Remarks) VALUES('%d','%s','%s','%s','%s')" % (PropertyID,person["Name"],person["Gender"],person["Occupation"],person["Remarks"])
 		cur.execute(query)
+		con.commit()
 
 def register_property(SellerID):
 	print()
@@ -718,7 +728,6 @@ def register_property(SellerID):
 	prop["AvailableFrom"] = input("Enter the DATE from which the Propety will be available(YYYY-MM-DD): ")
 	prop["FacingDirection"] = input("Enter the direction the main gate of the propety is facing(North,South,East,West): ")
 	prop["Cost"] = int(input("Enter the expected cost for the propety: "))
-	subclass = input("Enter Type of Property (Residential, Commercial, Plot): ")
 	query = "INSERT INTO STREETTOPINCODE(StreetAddress,Pincode) VALUES ('%s','%s')" % (prop["StreetAddress"],prop["Pincode"])
 	cur.execute(query)
 	query = "SELECT * FROM PINCODETOCITY WHERE Pincode = '%s'" % (prop["Pincode"])
@@ -739,6 +748,8 @@ def register_property(SellerID):
 	cur.execute(query);
 	tempdict = cur.fetchall()
 	PropertyID = tempdict[0]['PropertyID']
+	print()
+	subclass = input("Enter Type of Property (Residential, Commercial, Plot): ")
 	if subclass == "Residential":
 		register_residential(PropertyID)
 	elif subclass == "Commercial":
@@ -747,8 +758,9 @@ def register_property(SellerID):
 		register_plot(PropertyID,prop["Cost"])
 	else:
 		print("Invalid entry in Property Class")
-	register_person(PropertyID)
 	print("Data is successfully inserted with PropertyID: " + str(PropertyID));
+	register_person(PropertyID)
+	print("Successfull")
 
 
 def register_seller():
@@ -765,9 +777,11 @@ def register_seller():
 		query = "SELECT * FROM SELLER WHERE Email = '%s'" % (sell["Email"])
 		cur.execute(query);
 		tempdict = cur.fetchall()
-		register_property(tempdict[0]["SellerID"])
 		con.commit()
 		print("Data is successfully inserted with SellerID: " + str(tempdict[0]["SellerID"]));
+		cnt = int(input("Enter number of properties u want to list: "))
+		for i in range(cnt):
+			register_property(tempdict[0]["SellerID"])
 		input("Press Enter to continue")
 	except Exception as e:
 		con.rollback()
@@ -785,7 +799,7 @@ def register_buyer():
 		buy["MobileNo"] = input("Enter MobileNo:  ")
 		buy["Address"] = input("Enter Address: ")	
 		buy["CreditScore"] = int(input("Enter Credit Score(300 - 800): "))
-		buy["BankID"] = input("Enter BankID of the Bank if the  Buyer has taken a loan: ")
+		buy["BankID"] = input("Enter BankID of the Bank if the  Buyer has taken a loan(Leave empty if not): ")
 		query = "";
 		if(buy["BankID"] == ''):
 			query = "INSERT INTO BUYER(Name,Email,MobileNo,Address,CreditScore) VALUES('%s', '%s', '%s', '%s','%d')" % (buy["Name"],buy["Email"],buy["MobileNo"],buy["Address"],buy["CreditScore"])

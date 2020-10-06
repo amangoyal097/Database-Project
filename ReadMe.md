@@ -22,5 +22,6 @@ For MacOS from here <https://database.guide/how-to-install-sql-server-on-a-mac/>
 ## How to Access the Database
 
  Run these commands
-1.  `mysql -u <Your MySQL UserName> -p RealEstate < RealEstate.sql`
+1.  `mysql -u <Your MySQL UserName> -p < RealEstate.sql`
 2.  `python DBMS.py`
+3.  `Unique administrator ID : database are okish`
